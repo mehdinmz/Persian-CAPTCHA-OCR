@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Data (generated at runtime)
+data/captcha_generated/
+data/synthetic_dataset/
+data/captcha_train_yekan/
+data/captcha_test_yekan/
+data/captcha_fresh/
+data/captcha_crops_byekan/
+data/captcha_crops_byekan_aug/
+data/captcha_crops_multifont/
+data/captcha_crops_multifont_aug/
+data/_demo_*.png
+data/_test_*.png
+data/_eval_*.png
+data/_mf_*.png
+demo.png
+
+# Models (trained artifacts — re-download or retrain)
+models/*.keras
+models/*.h5
+
+# Dataset is hosted on HuggingFace (Mehdinmz/persian-handwritten-digits)
+data/dataset_farsi/
