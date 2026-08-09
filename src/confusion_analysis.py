@@ -1,5 +1,5 @@
 """
-Fast confusion-matrix analysis for Persian-CAPTCHA-OCR.
+Fast confusion-matrix analysis for Persian-Digit-OCR.
 
 Same analysis as confusion_analysis.py, but performs BATCH prediction
 (one model.predict() call per batch of digit crops) so it runs much

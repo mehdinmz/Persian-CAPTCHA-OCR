@@ -1,6 +1,6 @@
 # Persian Digit OCR —  تشخیص ارقام فارسی (دستنویس و کپچا)
 
-[![CI](https://github.com/mehdinmz/Persian-CAPTCHA-OCR/actions/workflows/ci.yml/badge.svg)](https://github.com/mehdinmz/Persian-CAPTCHA-OCR/actions/workflows/ci.yml)
+[![CI](https://github.com/mehdinmz/Persian-Digit-OCR/actions/workflows/ci.yml/badge.svg)](https://github.com/mehdinmz/Persian-Digit-OCR/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13%2B-orange)](https://www.tensorflow.org/)

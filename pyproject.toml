@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "persian-captcha-ocr"
+name = "persian-digit-ocr"
 version = "0.1.0"
 description = "OCR pipeline for Persian/Arabic-Indic digit CAPTCHAs: synthetic data generation, segmentation, CNN classification"
 readme = "README.md"
