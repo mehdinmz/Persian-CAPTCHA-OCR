@@ -104,8 +104,8 @@ snapshot_download('Mehdinmz/persian-handwritten-digits', repo_type='dataset',
 # Train the handwritten-digit model
 python src/train_handwritten.py --epochs 30
 
-# Evaluate the model (auto-downloads the dataset if missing)
-python src/evaluate.py --n 500
+# Evaluate the model (downloads a 600-image sample from HF if missing)
+python src/evaluate.py --n 50
 
 # Run the automated tests
 python -m pytest tests/ -v

@@ -105,8 +105,8 @@ snapshot_download('Mehdinmz/persian-handwritten-digits', repo_type='dataset',
 # آموزش مدل تشخیص دستنویس
 python src/train_handwritten.py --epochs 30
 
-# ارزیابی مدل (در صورت نبود دیتاست، خودکار دانلود میکند)
-python src/evaluate.py --n 500
+# ارزیابی مدل (در صورت نبود، نمونهٔ ۶۰۰تصویری از HF دانلود میکند)
+python src/evaluate.py --n 50
 
 # اجرای تستهای خودکار
 python -m pytest tests/ -v

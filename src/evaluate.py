@@ -1,15 +1,17 @@
 """Evaluate the handwritten-digit model on a real dataset.
 
 Usage:
-    python src/evaluate.py [--n 500] [--data data/dataset_farsi]
+    python src/evaluate.py [--n 50]
 
-Downloads the dataset from HuggingFace if not present locally, then reports
-per-class and overall accuracy.
+Uses the 600-image sample (60 per class) shipped on HuggingFace
+(Mehdinmz/persian-handwritten-digits → farsi_digits_sample.zip).
+The sample is downloaded once and cached under data/dataset_farsi_sample/.
 """
 import argparse
 import os
 import random
 import sys
+import zipfile
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent
@@ -22,19 +24,24 @@ from src.predictor import model  # handwritten-digit model
 
 DIGITS = "۰۱۲۳۴۵۶۷۸۹"
 HF_REPO = "Mehdinmz/persian-handwritten-digits"
+ZIP_FILE = "farsi_digits_sample.zip"
+SAMPLE_DIR = BASE / "data" / "dataset_farsi_sample"
 
 
-def _get_data_dir(data_arg: str) -> Path:
-    data_dir = Path(data_arg)
-    if (data_dir / "0").exists() and any((data_dir / "0").iterdir()):
-        return data_dir
-    print("Local dataset not found — downloading from HuggingFace...")
+def _get_sample_dir() -> Path:
+    """Return cached sample dir; download+extract once if missing."""
+    if (SAMPLE_DIR / "0").exists() and any((SAMPLE_DIR / "0").iterdir()):
+        return SAMPLE_DIR
+    print("Sample dataset not found — downloading from HuggingFace...")
     try:
-        from huggingface_hub import snapshot_download
+        from huggingface_hub import hf_hub_download
     except ImportError:
         raise SystemExit("huggingface_hub not installed. Run: pip install huggingface_hub")
-    snapshot_download(HF_REPO, repo_type="dataset", local_dir=str(data_dir))
-    return data_dir
+    zip_path = hf_hub_download(HF_REPO, ZIP_FILE, repo_type="dataset")
+    SAMPLE_DIR.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zip_path) as z:
+        z.extractall(SAMPLE_DIR)
+    return SAMPLE_DIR
 
 
 def evaluate(data_dir: Path, n_per_class: int) -> None:
@@ -66,11 +73,10 @@ def evaluate(data_dir: Path, n_per_class: int) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate the handwritten-digit model")
-    parser.add_argument("--data", default=str(BASE / "data" / "dataset_farsi"))
-    parser.add_argument("--n", type=int, default=500, help="images per class")
+    parser.add_argument("--n", type=int, default=50, help="images per class (max 60)")
     args = parser.parse_args()
-    data_dir = _get_data_dir(args.data)
-    evaluate(data_dir, args.n)
+    data_dir = _get_sample_dir()
+    evaluate(data_dir, min(args.n, 60))
 
 
 if __name__ == "__main__":

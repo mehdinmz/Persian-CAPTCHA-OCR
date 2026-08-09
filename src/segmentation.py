@@ -55,5 +55,6 @@ def main(image_path):
 
         cv2.waitKey(0)
 if __name__ == "__main__":
-    image_path = "C:\\Users\\MEHDI\\Desktop\\Projects\\Persian-CAPTCHA-OCR\\data\\captcha_generated\\images\\00004.png"
+    import sys
+    image_path = sys.argv[1] if len(sys.argv) > 1 else "path/to/captcha.png"
     main(image_path)
