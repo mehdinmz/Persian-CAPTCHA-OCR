@@ -137,16 +137,15 @@ python -m pytest tests/ -v
 
 ```
 CAPTCHA image
-    │
-    ▼
-┌─────────────────┐    ┌──────────────────┐    ┌──────────────────────┐
-│  Preprocessing  │ →  │   Segmentation    │ →  │  Digit Classification │
-│  (binarize,     │    │  (contours,       │    │  (CNN, 10 classes)    │
-│   denoise)      │    │   morphological)  │    │                       │
-└─────────────────┘    └──────────────────┘    └──────────────────────┘
-                                                    │
-                                                    ▼
-                                              "۵۲۶۰۱" (text)
+           │
+           ▼
+┌──────────────────────┐   ┌──────────────────────┐   ┌──────────────────────┐
+│    Preprocessing     │ → │     Segmentation     │ → │ Digit Classification │
+│ (binarize, denoise)  │   │  (contours, morph.)  │   │  (CNN, 10 classes)   │
+└──────────────────────┘   └──────────────────────┘   └──────────────────────┘
+                                                                 │
+                                                                 ▼
+                                                          "۵۲۶۰۱" (text)
 ```
 
 **1. Preprocessing** — split channels, keep near-black pixels (the digits), remove noise with morphological open/close.
