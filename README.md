@@ -51,6 +51,10 @@ A complete OCR pipeline for **Persian (Farsi) handwritten digits and CAPTCHAs** 
 
 </details>
 
+**Live predictions on real handwritten digits** (green = correct):
+
+![Demo results](assets/demo_results.png)
+
 ---
 
 ## 🚀 Quick Start
