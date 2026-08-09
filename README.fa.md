@@ -19,7 +19,7 @@
 - 🏆 **دقت ۹۹.۸٪** روی ارقام دستنویس واقعی فارسی (دیتاست ۸۰هزار تصویری)
 - 🧠 شبکهٔ عصبی کانولوشنی (CNN) با TensorFlow/Keras، از دیتای مصنوعی تا واقعی
 - 🔍 جداسازی (Segmentation) مقاوم رقمها با OpenCV
-- 🎨 تولیدکنندهٔ کپچای مصنوعی با بیش از ۲۰ فونت فارسی
+- 🎨 تولیدکنندهٔ کپچای مصنوعی با بیش از ۷۰ فونت فارسی
 - 📦 پکیج قابل نصب با رابط خط فرمان (`captcha-ocr`)
 - ✅ تست خودکار + CI در GitHub Actions
 - 🔬 ابزار تحلیل خطا (Confusion Matrix) و ارزیابی
@@ -79,13 +79,14 @@ captcha-ocr path/to/captcha.png --conf
 ### استفاده به عنوان کتابخانه
 
 ```python
-from src.pipeline import predict_captcha, predict_digit
+from src.pipeline import predict_captcha
+from src.predictor import predict_digit
 
-# تصویر کامل کپچا → متن
+# تصویر کامل کپچا → متن (مدل چندفونته)
 text = predict_captcha("path/to/captcha.png")
 print(text)  # "۵۲۶۰۱"
 
-# تصویر تکرقم → (رقم، اطمینان)
+# تصویر تکرقم → (رقم، اطمینان) (مدل دستنویس)
 digit, conf = predict_digit("path/to/digit.png")
 print(digit, f"{conf:.1%}")
 ```
@@ -93,11 +94,19 @@ print(digit, f"{conf:.1%}")
 ### آموزش و ارزیابی
 
 ```bash
-# آموزش مدل تشخیص دستنویس (با data/dataset_farsi)
+# دانلود دیتاست واقعی ارقام دستنویس از HuggingFace
+# (۸۰هزار تصویر، ۱۰ کلاس) در data/dataset_farsi:
+python -c "
+from huggingface_hub import snapshot_download
+snapshot_download('Mehdinmz/persian-handwritten-digits', repo_type='dataset',
+                  local_dir='data/dataset_farsi')
+"
+
+# آموزش مدل تشخیص دستنویس
 python src/train_handwritten.py --epochs 30
 
-# ارزیابی پایپلاین
-python src/evaluate.py
+# ارزیابی مدل (در صورت نبود دیتاست، خودکار دانلود میکند)
+python src/evaluate.py --n 500
 
 # اجرای تستهای خودکار
 python -m pytest tests/ -v
@@ -162,12 +171,14 @@ python -m pytest tests/ -v
 
 ## 🧠 مدلها
 
-**مدل پیشفرض** `models/digit_classifier_handwritten.keras` است — یک CNN که از صفر روی ۸۰هزار رقم دستنویس واقعی فارسی آموزش دیده.
+دو مدل آموزشدیده در `models/` قرار دارند:
 
 | مدل | توضیح |
 |-----|-------|
-| `digit_classifier_handwritten.keras` | **پیشفرض** — آموزش روی ارقام دستنویس واقعی (۹۹.۸٪) |
-| `digit_classifier_multifont.keras` | تنظیم دقیق روی کراپهای مصنوعی چندفونته کپچا |
+| `digit_classifier_multifont.keras` | **حلکنندهٔ کپچا** — تنظیم دقیق روی کراپهای مصنوعی چندفونته (۱۰۰٪ روی کپچای BYekan) |
+| `digit_classifier_handwritten.keras` | **ارقام دستنویس** — آموزش از صفر روی ۸۰هزار تصویر واقعی (۹۹.۸٪) |
+
+رابط خط فرمان (`captcha-ocr`) بهصورت خودکار انتخاب میکند: تصویر کپچای چندرقمی → مدل چندفونته، تصویر تکرقم → مدل دستنویس.
 
 **چرا فونت مهم بود؟** تولیدکنندهٔ اولیهٔ کپچا از فونت `BNazanin` استفاده میکرد که رقم `۰` فارسی را به شکل یک نقطهٔ ریز رندر میکرد (بهجای حلقهٔ کامل) — و همین دقت را بهشدت پایین میآورد. با تغییر به `BYekan` (که همهٔ رقمها را کامل رندر میکند) و آموزش روی کراپهای واقعی، دقت کپچا از **۳۰٪ به ۱۰۰٪** رسید.
 

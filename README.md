@@ -18,7 +18,7 @@ A complete OCR pipeline for **Persian (Farsi) handwritten digits and CAPTCHAs** 
 - 🏆 **99.8% accuracy** on real handwritten Persian digits (80k-image dataset)
 - 🧠 CNN classifier (TensorFlow/Keras), fine-tuned from synthetic → real data
 - 🔍 Robust digit segmentation (OpenCV contours + morphological preprocessing)
-- 🎨 Synthetic CAPTCHA generator with 20+ Persian fonts
+- 🎨 Synthetic CAPTCHA generator with 70+ Persian fonts
 - 📦 Installable package with CLI (`captcha-ocr`)
 - ✅ Automated tests + GitHub Actions CI
 - 🔬 Confusion-matrix analysis & evaluation tooling
@@ -78,13 +78,14 @@ captcha-ocr path/to/captcha.png --conf
 ### Use as a library
 
 ```python
-from src.pipeline import predict_captcha, predict_digit
+from src.pipeline import predict_captcha
+from src.predictor import predict_digit
 
-# Full CAPTCHA image → text
+# Full CAPTCHA image → text (multi-font model)
 text = predict_captcha("path/to/captcha.png")
 print(text)  # "۵۲۶۰۱"
 
-# Single digit image → (digit, confidence)
+# Single digit image → (digit, confidence) (handwritten model)
 digit, conf = predict_digit("path/to/digit.png")
 print(digit, f"{conf:.1%}")
 ```
@@ -92,11 +93,19 @@ print(digit, f"{conf:.1%}")
 ### Train / evaluate
 
 ```bash
-# Train the handwritten-digit model (uses data/dataset_farsi)
+# Download the real handwritten-digit dataset from HuggingFace
+# (80k images, 10 classes) into data/dataset_farsi:
+python -c "
+from huggingface_hub import snapshot_download
+snapshot_download('Mehdinmz/persian-handwritten-digits', repo_type='dataset',
+                  local_dir='data/dataset_farsi')
+"
+
+# Train the handwritten-digit model
 python src/train_handwritten.py --epochs 30
 
-# Evaluate the pipeline on a test set
-python src/evaluate.py
+# Evaluate the model (auto-downloads the dataset if missing)
+python src/evaluate.py --n 500
 
 # Run the automated tests
 python -m pytest tests/ -v
@@ -160,12 +169,14 @@ CAPTCHA image
 
 ## 🧠 Models
 
-The **default model** is `models/digit_classifier_handwritten.keras` — a CNN trained from scratch on 80k real handwritten Persian digits.
+Two trained models are shipped in `models/`:
 
 | Model | Description |
 |-------|-------------|
-| `digit_classifier_handwritten.keras` | **Default** — trained on real handwritten digits (99.8%) |
-| `digit_classifier_multifont.keras` | Fine-tuned on synthetic multi-font CAPTCHA crops |
+| `digit_classifier_multifont.keras` | **CAPTCHA solver** — fine-tuned on synthetic multi-font crops (100% on BYekan CAPTCHAs) |
+| `digit_classifier_handwritten.keras` | **Handwritten digits** — trained from scratch on 80k real images (99.8%) |
+
+The CLI (`captcha-ocr`) auto-selects: multi-digit CAPTCHA images → multi-font model, single-digit images → handwritten model.
 
 **Why the font matters:** the original CAPTCHA generator used `BNazanin`, which renders the Persian digit `۰` as a tiny dot instead of a full ring — crippling accuracy. Switching to `BYekan` (which renders all digits fully) plus training on real crops took CAPTCHA accuracy from **30% → 100%**.
 
