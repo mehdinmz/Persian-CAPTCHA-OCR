@@ -21,7 +21,7 @@ from src.segmentation import (
 # Project root: src/ is one level below the repo root
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-MODEL_PATH = BASE_DIR / "models" / "digit_classifier_handwritten.keras"
+MODEL_PATH = BASE_DIR / "models" / "digit_classifier_multifont.keras"
 
 DIGITS = "۰۱۲۳۴۵۶۷۸۹"
 

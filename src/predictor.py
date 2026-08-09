@@ -145,17 +145,51 @@ def main():
     args = parser.parse_args()
 
     try:
-        from src.pipeline import predict_captcha
+        import cv2
+        import numpy as np
+        from src.pipeline import predict_captcha, predict_digit
+        from src.preprocessing import preprocess_before_seg
+        from src.segmentation import find_digits, crop_digits
+
+        # Segment the image
+        thresh = preprocess_before_seg(args.image)
+        boxes = sorted(find_digits(thresh), key=lambda b: b[0])
+        crops = crop_digits(thresh, boxes)
+
+        if not crops:
+            raise ValueError("No digits were detected.")
+
+        # Decide: single digit vs full CAPTCHA.
+        # A CAPTCHA has several separated digit blobs; a single digit may
+        # fragment into several small contours, so we merge them and check
+        # the overall aspect ratio.
+        if len(crops) > 1:
+            x0 = min(b[0] for b in boxes)
+            y0 = min(b[1] for b in boxes)
+            x1 = max(b[0] + b[2] for b in boxes)
+            y1 = max(b[1] + b[3] for b in boxes)
+            merged = thresh[y0:y1, x0:x1]
+            h, w = merged.shape[:2]
+            # digits are roughly square-ish (h/w between 0.5 and 2.5);
+            # a full CAPTCHA is much wider than tall
+            is_single = (h / max(w, 1)) > 0.4
+        else:
+            merged = crops[0]
+            is_single = True
+
+        if is_single:
+            # Single digit image → handwritten model
+            from src.predictor import predict_digit as predict_digit_hw
+            digit, conf = predict_digit_hw(merged)
+            print(digit)
+            if args.conf:
+                print(f"  {digit}: {conf:.1%}")
+            return
+
+        # Full CAPTCHA (multiple digits) → pipeline (multi-font model)
         text = predict_captcha(args.image)
         print(text)
         if args.conf:
-            # per-digit confidence via predictor
-            import cv2
-            from src.preprocessing import preprocess_before_seg
-            from src.segmentation import find_digits, crop_digits
-            thresh = preprocess_before_seg(args.image)
-            boxes = sorted(find_digits(thresh), key=lambda b: b[0])
-            crops = crop_digits(thresh, boxes)
             for d, crop in zip(text, crops):
                 if crop is None or crop.size == 0:
                     continue

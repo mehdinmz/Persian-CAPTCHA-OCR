@@ -18,7 +18,7 @@ sys.path.insert(0, str(BASE))
 import cv2  # noqa: E402
 import numpy as np  # noqa: E402
 
-from src.pipeline import model  # noqa: E402
+from src.predictor import model  # noqa: E402  (handwritten-digit model)
 
 DIGITS = "۰۱۲۳۴۵۶۷۸۹"
 SAMPLE_DIR = BASE / "data" / "dataset_farsi_sample"
@@ -80,8 +80,37 @@ def test_random_sample_accuracy():
     assert acc >= 0.97, f"accuracy too low: {acc:.1%}"
 
 
+def test_captcha_multifont():
+    """Full CAPTCHA solving with the multi-font model must be correct."""
+    from PIL import Image, ImageDraw, ImageFont
+    from src.pipeline import predict_captcha
+
+    font_path = BASE / "fonts" / "persian" / "BYekan.ttf"
+    if not font_path.exists():
+        return  # fonts not shipped in this checkout; skip
+
+    img = Image.new("RGB", (200, 80), "white")
+    d = ImageDraw.Draw(img)
+    font = ImageFont.truetype(str(font_path), 42)
+    x = 20
+    text = "۵۲۶۰۱"
+    for ch in text:
+        d.text((x, 18), ch, font=font, fill="black")
+        x += 32
+    tmp = BASE / "data" / "_captcha_test.png"
+    img.save(tmp)
+    try:
+        pred = predict_captcha(tmp)
+        assert pred == text, f"captcha: expected {text}, got {pred}"
+        print(f"\nCAPTCHA (multi-font model): {pred} -> OK")
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
 if __name__ == "__main__":
     test_single_digit_each_class()
     print("test_single_digit_each_class: OK")
     test_random_sample_accuracy()
     print("test_random_sample_accuracy: OK")
+    test_captcha_multifont()
+    print("test_captcha_multifont: OK")
