@@ -19,7 +19,7 @@ def main():
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--out", default=str(BASE / "models" / "digit_classifier_multifont.keras"))
-    parser.add_argument("--base", default=str(BASE / "models" / "digit_classifier_captcha_v2.keras"))
+    parser.add_argument("--base", default=str(BASE / "models" / "digit_classifier_handwritten.keras"))
     args = parser.parse_args()
 
     data_dir = Path(args.data)

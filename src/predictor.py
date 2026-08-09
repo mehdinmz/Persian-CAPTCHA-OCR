@@ -7,7 +7,7 @@ import tensorflow as tf
 # Project root: src/ is one level below the repo root
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-MODEL_PATH = BASE_DIR / "models" / "digit_classifier_captcha_v2.keras"
+MODEL_PATH = BASE_DIR / "models" / "digit_classifier_handwritten.keras"
 
 IMAGE_SIZE = (28, 28)
 

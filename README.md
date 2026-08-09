@@ -165,11 +165,8 @@ The **default model** is `models/digit_classifier_handwritten.keras` — a CNN t
 
 | Model | Description |
 |-------|-------------|
-| `digit_classifier_handwritten.keras` | **Best** — trained on real handwritten digits (99.8%) |
-| `digit_classifier_captcha_v2.keras` | Fine-tuned on real CAPTCHA crops (BYekan) |
-| `digit_classifier_captcha.keras` | Fine-tuned on CAPTCHA crops (v1) |
-| `digit_classifier_finetuned1-4.keras` | Progressive fine-tuning checkpoints |
-| `digit_classifier.keras` / `.h5` | Base CNN on synthetic data |
+| `digit_classifier_handwritten.keras` | **Default** — trained on real handwritten digits (99.8%) |
+| `digit_classifier_multifont.keras` | Fine-tuned on synthetic multi-font CAPTCHA crops |
 
 **Why the font matters:** the original CAPTCHA generator used `BNazanin`, which renders the Persian digit `۰` as a tiny dot instead of a full ring — crippling accuracy. Switching to `BYekan` (which renders all digits fully) plus training on real crops took CAPTCHA accuracy from **30% → 100%**.
 
