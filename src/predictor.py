@@ -83,10 +83,18 @@ def predict_digit(image):
     """
     Predict one Persian digit.
 
+    Accepts either a file path (str/Path) or a numpy array (grayscale/BGR).
+
     Returns:
         digit      -> Persian digit
         confidence -> prediction confidence
     """
+
+    if isinstance(image, (str, Path)):
+        img = cv2.imread(str(image), cv2.IMREAD_GRAYSCALE)
+        if img is None:
+            raise FileNotFoundError(f"Could not read image: {image}")
+        image = img
 
     image = prepare_image(image)
 

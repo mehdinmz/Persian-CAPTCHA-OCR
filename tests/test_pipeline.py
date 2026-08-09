@@ -107,6 +107,25 @@ def test_captcha_multifont():
         tmp.unlink(missing_ok=True)
 
 
+def test_predict_digit_accepts_path():
+    """predict_digit must accept both a file path and a numpy array."""
+    from src.predictor import predict_digit
+
+    data_dir = _get_sample_dir()
+    sample = sorted((data_dir / "5").glob("*.png"))[0]
+
+    # path (str/Path)
+    d1, _ = predict_digit(str(sample))
+    assert d1 == "۵", f"path: expected ۵, got {d1}"
+
+    # numpy array
+    img = cv2.imread(str(sample), cv2.IMREAD_GRAYSCALE)
+    d2, _ = predict_digit(img)
+    assert d2 == "۵", f"array: expected ۵, got {d2}"
+
+    print("\npredict_digit accepts str path + numpy array: OK")
+
+
 if __name__ == "__main__":
     test_single_digit_each_class()
     print("test_single_digit_each_class: OK")
@@ -114,3 +133,5 @@ if __name__ == "__main__":
     print("test_random_sample_accuracy: OK")
     test_captcha_multifont()
     print("test_captcha_multifont: OK")
+    test_predict_digit_accepts_path()
+    print("test_predict_digit_accepts_path: OK")
