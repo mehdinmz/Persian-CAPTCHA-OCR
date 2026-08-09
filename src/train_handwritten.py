@@ -25,7 +25,13 @@ def main():
     args = parser.parse_args()
 
     if not DATA_DIR.exists():
-        raise SystemExit(f"Dataset not found: {DATA_DIR}")
+        raise SystemExit(
+            f"Dataset not found: {DATA_DIR}\n"
+            "Download it first:\n"
+            "  python -c \"from huggingface_hub import snapshot_download; "
+            "snapshot_download('Mehdinmz/persian-handwritten-digits', "
+            "repo_type='dataset', local_dir='data/dataset_farsi')\""
+        )
 
     train_ds = tf.keras.utils.image_dataset_from_directory(
         str(DATA_DIR),
