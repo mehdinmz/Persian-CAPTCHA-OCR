@@ -14,7 +14,7 @@ from collections import Counter
 import numpy as np
 
 BASE = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BASE))
+sys.path.insert(0, os.path.abspath('..')))
 
 from src.preprocessing import preprocess_before_seg  # noqa: E402
 from src.segmentation import find_digits, crop_digits  # noqa: E402

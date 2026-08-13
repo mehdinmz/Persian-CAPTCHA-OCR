@@ -5,7 +5,7 @@ from pathlib import Path
 from collections import Counter
 
 BASE = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BASE))
+sys.path.insert(0, os.path.abspath('..')))
 
 from PIL import Image, ImageDraw, ImageFont  # noqa: E402
 

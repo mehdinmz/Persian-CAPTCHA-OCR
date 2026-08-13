@@ -15,7 +15,7 @@ import zipfile
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BASE))
+sys.path.insert(0, os.path.abspath('..')))
 
 import cv2
 import numpy as np

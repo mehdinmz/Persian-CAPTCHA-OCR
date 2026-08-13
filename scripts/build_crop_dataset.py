@@ -7,7 +7,7 @@ import cv2
 from PIL import Image
 
 BASE = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BASE))
+sys.path.insert(0, os.path.abspath('..')))
 
 from src.preprocessing import preprocess_before_seg
 
