@@ -11,7 +11,6 @@
 
 **دقت ۹۹.۸٪ روی ارقام دستنویس واقعی فارسی.**
 
-
 ---
 
 ## ✨ ویژگیهای کلیدی
@@ -20,7 +19,6 @@
 - 🧠 شبکهٔ عصبی کانولوشنی (CNN) با TensorFlow/Keras، از دیتای مصنوعی تا واقعی
 - 🔍 جداسازی (Segmentation) مقاوم رقمها با OpenCV
 - 🎨 تولیدکنندهٔ کپچای مصنوعی با بیش از ۷۰ فونت فارسی
-- 📦 پکیج قابل نصب با رابط خط فرمان (`captcha-ocr`)
 - ✅ تست خودکار + CI در GitHub Actions
 - 🔬 ابزار تحلیل خطا (Confusion Matrix) و ارزیابی
 
@@ -60,20 +58,40 @@
 
 ## 🚀 شروع سریع
 
+### پیشنیازها
+- پایتون ۳.۱۰ یا بالاتر
+- `pip` و `venv` (پیشنهادی)
+
 ### نصب
 
 ```bash
-pip install -e .
+git clone https://github.com/mehdinmz/Persian-Digit-OCR.git
+cd Persian-Digit-OCR
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+pip install --upgrade pip
+pip install -r requirements.txt
 ```
+
+> TensorFlow، OpenCV، pandas، matplotlib، seaborn، scikit-learn، jupyter و pytest را نصب میکند.
 
 ### استفاده از خط فرمان
 
 ```bash
-# تشخیص کپچا
-captcha-ocr path/to/captcha.png
+# تشخیص کپچا (با آرگومان مستقیم یا فلگ --image)
+python src/predictor.py path/to/captcha.png
+python src/predictor.py --image path/to/captcha.png
 
 # نمایش اطمینان هر رقم
-captcha-ocr path/to/captcha.png --conf
+python src/predictor.py path/to/captcha.png --conf
+```
+
+**نمونه خروجی:**
+```
+۴
+  ۴: 94.5%
 ```
 
 ### استفاده به عنوان کتابخانه
@@ -106,11 +124,22 @@ snapshot_download('Mehdinmz/persian-handwritten-digits', repo_type='dataset',
 python src/train_handwritten.py --epochs 30
 
 # ارزیابی مدل (در صورت نبود، نمونهٔ ۶۰۰تصویری از HF دانلود میکند)
-python src/evaluate.py --n 50
+python scripts/evaluate.py --n 50
 
 # اجرای تستهای خودکار
 python -m pytest tests/ -v
 ```
+
+### اجرای نوتبوکها
+
+```bash
+jupyter notebook notebooks/06_evaluation.ipynb
+```
+
+> **نکته:** اگر `jupyter` در PATH نیست، از اجراییِ venv استفاده کنید:
+> ```bash
+> .venv/bin/jupyter-notebook --no-browser --port=8888
+> ```
 
 ---
 
@@ -121,51 +150,48 @@ python -m pytest tests/ -v
 ├── src/                      # کتابخانهٔ اصلی و ابزارها
 │   ├── model.py              # معماری CNN
 │   ├── pipeline.py           # پیشبینی سرتاسری (تصویر → متن)
-│   ├── predictor.py          # پیشبینی تکرقم + خط فرمان
-│   ├── preprocessing.py      # دوبارهسازی / آستانهگذاری
-│   ├── segmentation.py       # جداسازی رقمها (کانتور)
+│   ├── predictor.py          # پیشبینی تکرقم + CLI
+│   ├── preprocessing.py      # دوتاییسازی / آستانهگذاری
+│   ├── segmentation.py       # جداسازی رقمها (کانتورها)
 │   ├── captcha_generator.py  # تولیدکنندهٔ کپچای مصنوعی
 │   ├── train_handwritten.py  # آموزش روی ارقام دستنویس واقعی
-│   ├── finetune_captcha.py   # تنظیم دقیق روی کراپهای کپچا
-│   ├── evaluate.py           # ارزیابی دقت
-│   ├── confusion_analysis.py # تحلیل ماتریس خطا
-│   └── ...                   # ابزارهای ساخت و تقویت داده
+│   └── ...
+├── scripts/                  # اسکریپتهای کمکی (ارزیابی، دیتاست، بررسی فونت)
 ├── tests/                    # تستهای خودکار (pytest)
-├── notebooks/                # نتبوکهای Jupyter (از کاوش تا استقرار)
+├── notebooks/                # نوتبوکهای Jupyter (از کاوش تا استقرار)
 ├── data/
-│   └── ...                   # دیتاستهای مصنوعی (در git نادیده گرفته شده)
-│                             # ارقام واقعی: میزبانی در HuggingFace (Mehdinmz/persian-handwritten-digits)
-├── models/                   # مدلهای آموزشدیده
-├── fonts/persian/            # ۷۰+ فونت فارسی برای تولید مصنوعی
+│   └── ...                   # دیتاستهای مصنوعی تولیدشده (gitignored)
+│                             # ارقام واقعی: میزبانی شده در HuggingFace (Mehdinmz/persian-handwritten-digits)
+├── models/                   # چکپوینتهای مدل آموزشدیده
+├── fonts/persian/            # بیش از ۷۰ فونت فارسی برای تولید مصنوعی
 ├── .github/workflows/ci.yml  # CI در GitHub Actions
 └── pyproject.toml            # تعریف پکیج (MIT)
 ```
 
 ---
 
-## 🔬 نحوهٔ کار
+## 🔬 نحوه کار
 
 ```
 تصویر کپچا
            │
            ▼
 ┌──────────────────────┐   ┌──────────────────────┐   ┌──────────────────────┐
-│      پیش‌پردازش      │ → │    جداسازی رقم‌ها    │ → │   طبقه‌بندی رقم‌ها   │
-│    (دودویی‌سازی،     │   │      (کانتورها،      │   │    (CNN، ۱۰ کلاس)    │
-│      حذف نویز)       │   │      مورفولوژی)      │   │                      │
+│    پیشپردازش         │ → │     جداسازی          │ → │   طبقهبندی رقم       │
+│ (دوتاییسازی، کاهش نویز) │   │ (کانتورها، مورفولوژی) │   │  (CNN، ۱۰ کلاس)      │
 └──────────────────────┘   └──────────────────────┘   └──────────────────────┘
                                                                  │
                                                                  ▼
                                                           "۵۲۶۰۱" (متن)
 ```
 
-**۱. پیشپردازش** — جداسازی کانالها، نگهداشتن پیکسلهای نزدیک به سیاه (رقمها)، حذف نویز با عملیات مورفولوژیک.
+**۱. پیشپردازش** — جداسازی کانالها، نگهداشتن پیکسلهای نزدیک به سیاه (رقمها)، حذف نویز با مورفولوژی open/close.
 
-**۲. جداسازی** — پیدا کردن کانتور رقمها، مرتبسازی چپ به راست، برش هر رقم با حاشیه.
+**۲. جداسازی** — یافتن کانتور رقمها، مرتبسازی چپ به راست، برش هر رقم با حاشیه.
 
-**۳. طبقهبندی** — تغییر اندازهٔ هر برش به ۲۸×۲۸، نرمالسازی و طبقهبندی با CNN (Conv2D → MaxPool → Dense → Softmax، ۱۰ کلاس).
+**۳. طبقهبندی** — تغییر اندازه هر برش به ۲۸×۲۸، نرمالسازی، طبقهبندی با CNN (Conv2D → MaxPool → Dense → Softmax، ۱۰ کلاس).
 
-**۴. ارزیابی** — دقت سطح رقم و سطح کپچا، ماتریس خطا برای هر رقم.
+**۴. ارزیابی** — دقت در سطح رقم و سطح کپچا، ماتریس درهمریختگی برای هر رقم.
 
 ---
 
@@ -174,25 +200,26 @@ python -m pytest tests/ -v
 دو مدل آموزشدیده در `models/` قرار دارند:
 
 | مدل | توضیح |
-|-----|-------|
-| `digit_classifier_multifont.keras` | **حلکنندهٔ کپچا** — تنظیم دقیق روی کراپهای مصنوعی چندفونته (۱۰۰٪ روی کپچای BYekan) |
+|---|---|
+| `digit_classifier_multifont.keras` | **حلکنندهٔ کپچا** — فاینتیونشده روی برشهای مصنوعی چندفونته (۱۰۰٪ روی کپچاهای BYekan) |
 | `digit_classifier_handwritten.keras` | **ارقام دستنویس** — آموزش از صفر روی ۸۰هزار تصویر واقعی (۹۹.۸٪) |
 
-رابط خط فرمان (`captcha-ocr`) بهصورت خودکار انتخاب میکند: تصویر کپچای چندرقمی → مدل چندفونته، تصویر تکرقم → مدل دستنویس.
+CLI بهطور خودکار انتخاب میکند: تصاویر کپچای چندرقمی → مدل چندفونته، تصاویر تکرقمی → مدل دستنویس.
 
-**چرا فونت مهم بود؟** تولیدکنندهٔ اولیهٔ کپچا از فونت `BNazanin` استفاده میکرد که رقم `۰` فارسی را به شکل یک نقطهٔ ریز رندر میکرد (بهجای حلقهٔ کامل) — و همین دقت را بهشدت پایین میآورد. با تغییر به `BYekan` (که همهٔ رقمها را کامل رندر میکند) و آموزش روی کراپهای واقعی، دقت کپچا از **۳۰٪ به ۱۰۰٪** رسید.
+**چرا فونت مهم است:** تولیدکنندهٔ اصلی کپچا از `BNazanin` استفاده میکرد که رقم `۰` را بهصورت یک نقطهٔ ریز بهجای حلقهٔ کامل رندر میکند و دقت را بهشدت پایین میآورد. تعویض به `BYekan` (که همهٔ رقمها را کامل رندر میکند) بههمراه آموزش روی برشهای واقعی، دقت کپچا را از **۳۰٪ به ۱۰۰٪** رساند.
 
 ---
 
-## 📓 نتبوکها
+## 📓 نوتبوکها
 
-| نتبوک | کاربرد |
-|-------|--------|
+| نوتبوک | هدف |
+|---|---|
 | `01_explore_dataset.ipynb` | مرور دیتاست (۱۰ کلاس، ۲۸×۲۸، ۸۰هزار تصویر) |
 | `02_training.ipynb` | آموزش CNN پایه |
 | `03_segmentation_test.ipynb` | تست جداسازی روی کپچاهای واقعی |
-| `04_prediction_pipeline.ipynb` | ساخت پایپلاین سرتاسری |
-| `05_fine_tuning.ipynb` | تنظیم دقیق روی ارقام واقعی فارسی |
+| `04_prediction_pipeline.ipynb` | مونتاژ پایپلاین سرتاسری |
+| `05_fine_tuning.ipynb` | فاینتیون روی تصاویر ارقام فارسی واقعی |
+| `06_evaluation.ipynb` | ارزیابی نهایی با ماتریس درهمریختگی |
 
 ---
 
@@ -207,14 +234,14 @@ python -m pytest tests/ -v
 
 ### CI
 
-هر push به `main`، مجموعهتستها را در GitHub Actions (Ubuntu، Python 3.11) اجرا میکند. بج سبز یعنی پایپلاین سالم است.
+هر پوش به `main`، مجموعهٔ تست را روی GitHub Actions (Ubuntu، پایتون 3.11) اجرا میکند. نشان سبز یعنی پایپلاین سالم است.
 
 ---
 
 ## 🤗 Hugging Face
 
-| بخش | لینک |
-|-----|------|
+| آرتیفکت | لینک |
+|---|---|
 | **دیتاست** (۸۰هزار رقم دستنویس) | [Mehdinmz/persian-handwritten-digits](https://huggingface.co/datasets/Mehdinmz/persian-handwritten-digits) |
 | **مدل** (CNN، ۹۹.۸٪) | [Mehdinmz/persian-handwritten-digit-recognition](https://huggingface.co/Mehdinmz/persian-handwritten-digit-recognition) |
 
@@ -229,6 +256,6 @@ model = tf.keras.models.load_model(path)
 
 ---
 
-## 📄 لایسنس
+## 📄 مجوز
 
 [MIT](LICENSE) © 2026 محمد مهدی نمازیان
