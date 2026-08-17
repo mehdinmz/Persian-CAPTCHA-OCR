@@ -156,6 +156,8 @@ def main():
     parser.add_argument("image", nargs="?", help="Path to CAPTCHA image")
     parser.add_argument("--image", dest="image_path", help="Path to CAPTCHA image")
     parser.add_argument("--conf", action="store_true", help="Show per-digit confidence")
+    parser.add_argument("--auto", action="store_true",
+                        help="Use adaptive (Otsu) binarization for real-world images")
     args = parser.parse_args()
 
     image_path = args.image_path or args.image
@@ -170,7 +172,7 @@ def main():
         from src.segmentation import find_digits, crop_digits
 
         # Segment the image
-        thresh = preprocess_before_seg(image_path)
+        thresh = preprocess_before_seg(image_path, auto_otsu=args.auto)
         boxes = sorted(find_digits(thresh), key=lambda b: b[0])
         crops = crop_digits(thresh, boxes)
 
@@ -178,41 +180,29 @@ def main():
             raise ValueError("No digits were detected.")
 
         # Decide: single digit vs full CAPTCHA.
-        # A CAPTCHA has several separated digit blobs; a single digit may
-        # fragment into several small contours, so we merge them and check
-        # the overall aspect ratio.
-        if len(crops) > 1:
-            x0 = min(b[0] for b in boxes)
-            y0 = min(b[1] for b in boxes)
-            x1 = max(b[0] + b[2] for b in boxes)
-            y1 = max(b[1] + b[3] for b in boxes)
-            merged = thresh[y0:y1, x0:x1]
-            h, w = merged.shape[:2]
-            # digits are roughly square-ish (h/w between 0.5 and 2.5);
-            # a full CAPTCHA is much wider than tall
-            is_single = (h / max(w, 1)) > 0.4
-        else:
-            merged = crops[0]
-            is_single = True
+        # If multiple separated digit boxes were detected, process each box;
+        # if only one box was found, process it as a single digit.
+        is_single = len(crops) == 1
 
         if is_single:
             # Single digit image → handwritten model
-            from src.predictor import predict_digit as predict_digit_hw
-            digit, conf = predict_digit_hw(merged)
+            digit, conf = predict_digit(crops[0])
             print(digit)
             if args.conf:
                 print(f"  {digit}: {conf:.1%}")
             return
 
-        # Full CAPTCHA (multiple digits) → pipeline (multi-font model)
-        text = predict_captcha(image_path)
+        # Multiple digits → predict each cropped box
+        digits_out = []
+        for crop in crops:
+            digit, conf = predict_digit(crop)
+            digits_out.append((digit, conf))
+
+        text = "".join(d for d, _ in digits_out)
         print(text)
         if args.conf:
-            for d, crop in zip(text, crops):
-                if crop is None or crop.size == 0:
-                    continue
-                digit, conf = predict_digit(crop)
-                print(f"  {digit}: {conf:.1%}")
+            for d, conf in digits_out:
+                print(f"  {d}: {conf:.1%}")
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
