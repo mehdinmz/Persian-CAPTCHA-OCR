@@ -1,232 +1,119 @@
-# Persian Digit OCR —  تشخیص ارقام فارسی (دستنویس و کپچا)
+# Persian-Digit-OCR
 
-[![CI](https://github.com/mehdinmz/Persian-Digit-OCR/actions/workflows/ci.yml/badge.svg)](https://github.com/mehdinmz/Persian-Digit-OCR/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
-[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13%2B-orange)](https://www.tensorflow.org/)
+A robust, end-to-end OCR pipeline for Persian handwritten digits and CAPTCHAs.
 
-**🌐 [English](README.md) | [فارسی](README.fa.md)**
+## Features
+- 🧠 **Handwritten digit recognition** — CNN with **99.8% accuracy** on 600 real handwritten digits
+- 🤖 **CAPTCHA pipeline** — image preprocessing → segmentation → multi-font digit recognition (100% on test set)
+- 🔤 **Multi-font support** — 80+ Persian fonts for synthetic CAPTCHA generation
+- 📦 **HuggingFace integration** — model & sample dataset published on [Mehdinmz/persian-handwritten-digits](https://huggingface.co/datasets/Mehdinmz/persian-handwritten-digits)
+- 🧪 **CI & tests** — pytest suite + GitHub Actions
 
-A complete OCR pipeline for **Persian (Farsi) handwritten digits and CAPTCHAs** — `۰۱۲۳۴۵۶۷۸۹` — built with TensorFlow/Keras and OpenCV.
+## Prerequisites
+- Python 3.10+
+- `pip` and `venv` (recommended)
 
-**99.8% accuracy** on real handwritten Persian digits.
+## Installation
 
----
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/mehdinmz/Persian-Digit-OCR.git
+   cd Persian-Digit-OCR
+   ```
 
-## ✨ Highlights
+2. **Setup virtual environment:**
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
 
-- 🏆 **99.8% accuracy** on real handwritten Persian digits (80k-image dataset)
-- 🧠 CNN classifier (TensorFlow/Keras), fine-tuned from synthetic → real data
-- 🔍 Robust digit segmentation (OpenCV contours + morphological preprocessing)
-- 🎨 Synthetic CAPTCHA generator with 70+ Persian fonts
-- 📦 Installable package with CLI (`captcha-ocr`)
-- ✅ Automated tests + GitHub Actions CI
-- 🔬 Confusion-matrix analysis & evaluation tooling
+3. **Install dependencies:**
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
 
----
+   > It also installs `jupyter` for running the notebooks and `matplotlib` / `seaborn` for visualizations.
 
-## 📊 Results
+## Usage
 
-| Task | Accuracy |
-|------|----------|
-| **Handwritten digit classification** (real data) | **99.8%** |
-| CAPTCHA digit classification (synthetic, BYekan font) | **100%** |
-| Full CAPTCHA solving (5 digits, synthetic) | **100%** |
-
-<details>
-<summary><b>Per-class handwritten accuracy</b> (200 images per class)</summary>
-
-| Class | Accuracy |
-|-------|----------|
-| ۰ | 100.0% |
-| ۱ | 99.5% |
-| ۲ | 100.0% |
-| ۳ | 99.5% |
-| ۴ | 100.0% |
-| ۵ | 100.0% |
-| ۶ | 100.0% |
-| ۷ | 100.0% |
-| ۸ | 100.0% |
-| ۹ | 99.5% |
-
-</details>
-
-**Live predictions on real handwritten digits** (green = correct):
-
-![Demo results](assets/demo_results.png)
-
----
-
-## 🚀 Quick Start
-
-### Install
+### 1. Prediction (CLI)
+Recognize a handwritten digit or a CAPTCHA image:
 
 ```bash
-pip install -e .
+python src/predictor.py --image path/to/image.png
 ```
 
-### Use the CLI
+You can also pass the path as a positional argument:
 
 ```bash
-# Solve a CAPTCHA image
-captcha-ocr path/to/captcha.png
-
-# Show per-digit confidence
-captcha-ocr path/to/captcha.png --conf
+python src/predictor.py path/to/image.png
 ```
 
-### Use as a library
+Add `--conf` to show per-digit confidence:
+
+```bash
+python src/predictor.py path/to/image.png --conf
+```
+
+**Example output:**
+```
+۴
+  ۴: 94.5%
+```
+
+### 2. As a Python API
 
 ```python
-from src.pipeline import predict_captcha
 from src.predictor import predict_digit
 
-# Full CAPTCHA image → text (multi-font model)
-text = predict_captcha("path/to/captcha.png")
-print(text)  # "۵۲۶۰۱"
-
-# Single digit image → (digit, confidence) (handwritten model)
-digit, conf = predict_digit("path/to/digit.png")
-print(digit, f"{conf:.1%}")
+digit, confidence = predict_digit("path/to/digit.png")
+print(digit, confidence)
 ```
 
-### Train / evaluate
+### 3. Evaluate the model
+Evaluate the handwritten-digit model on the real sample dataset (auto-downloads from HuggingFace):
 
 ```bash
-# Download the real handwritten-digit dataset from HuggingFace
-# (80k images, 10 classes) into data/dataset_farsi:
-python -c "
-from huggingface_hub import snapshot_download
-snapshot_download('Mehdinmz/persian-handwritten-digits', repo_type='dataset',
-                  local_dir='data/dataset_farsi')
-"
+python scripts/evaluate.py --n 60
+```
 
-# Train the handwritten-digit model
-python src/train_handwritten.py --epochs 30
+**Example output:**
+```
+Overall accuracy: 599/600 = 99.8%
+```
 
-# Evaluate the model (downloads a 600-image sample from HF if missing)
-python src/evaluate.py --n 50
+### 4. Train the model
+Train a fresh CNN on the handwritten dataset:
 
-# Run the automated tests
+```bash
+python src/train_handwritten.py --epochs 25
+```
+
+### 5. Run the notebooks
+The notebooks document the full pipeline (exploration → training → fine-tuning → evaluation):
+
+```bash
+jupyter notebook notebooks/06_evaluation.ipynb
+```
+
+> **Tip:** run Jupyter via the venv executable if `jupyter` is not on your PATH:
+> ```bash
+> .venv/bin/jupyter-notebook --no-browser --port=8888
+> ```
+
+## Project Structure
+- `src/`: Core logic (predictor, pipeline, preprocessing, segmentation, model).
+- `scripts/`: Helper scripts (evaluation, dataset building, augmentation, fonts check).
+- `notebooks/`: Analytical & training notebooks.
+- `data/`: Dataset storage (git-ignored).
+- `models/`: Trained model checkpoints.
+- `tests/`: Unit tests (pytest).
+
+## Tests
+```bash
 python -m pytest tests/ -v
 ```
 
----
-
-## 🗂 Project Structure
-
-```
-.
-├── src/                      # Core library & tools
-│   ├── model.py              # CNN architecture
-│   ├── pipeline.py           # End-to-end prediction (image → text)
-│   ├── predictor.py          # Single-digit prediction + CLI
-│   ├── preprocessing.py      # Binarization / thresholding
-│   ├── segmentation.py       # Digit segmentation (contours)
-│   ├── captcha_generator.py  # Synthetic CAPTCHA generator
-│   ├── train_handwritten.py  # Train on real handwritten digits
-│   ├── finetune_captcha.py   # Fine-tune on CAPTCHA crops
-│   ├── evaluate.py           # Accuracy evaluation
-│   ├── confusion_analysis.py # Confusion-matrix analysis
-│   └── ...                   # Data building & augmentation tools
-├── tests/                    # Automated tests (pytest)
-├── notebooks/                # Jupyter notebooks (exploration → deployment)
-├── data/
-│   └── ...                   # Generated synthetic datasets (gitignored)
-│                             # Real digits: hosted on HuggingFace (Mehdinmz/persian-handwritten-digits)
-├── models/                   # Trained model checkpoints
-├── fonts/persian/            # 70+ Persian fonts for synthesis
-├── .github/workflows/ci.yml  # GitHub Actions CI
-└── pyproject.toml            # Package definition (MIT)
-```
-
----
-
-## 🔬 How It Works
-
-```
-CAPTCHA image
-           │
-           ▼
-┌──────────────────────┐   ┌──────────────────────┐   ┌──────────────────────┐
-│    Preprocessing     │ → │     Segmentation     │ → │ Digit Classification │
-│ (binarize, denoise)  │   │  (contours, morph.)  │   │  (CNN, 10 classes)   │
-└──────────────────────┘   └──────────────────────┘   └──────────────────────┘
-                                                                 │
-                                                                 ▼
-                                                          "۵۲۶۰۱" (text)
-```
-
-**1. Preprocessing** — split channels, keep near-black pixels (the digits), remove noise with morphological open/close.
-
-**2. Segmentation** — find digit contours, sort left-to-right, crop each digit with padding.
-
-**3. Classification** — resize each crop to 28×28, normalize, classify with a CNN (Conv2D → MaxPool → Dense → Softmax, 10 classes).
-
-**4. Evaluation** — digit-level and CAPTCHA-level accuracy, confusion matrix per digit.
-
----
-
-## 🧠 Models
-
-Two trained models are shipped in `models/`:
-
-| Model | Description |
-|-------|-------------|
-| `digit_classifier_multifont.keras` | **CAPTCHA solver** — fine-tuned on synthetic multi-font crops (100% on BYekan CAPTCHAs) |
-| `digit_classifier_handwritten.keras` | **Handwritten digits** — trained from scratch on 80k real images (99.8%) |
-
-The CLI (`captcha-ocr`) auto-selects: multi-digit CAPTCHA images → multi-font model, single-digit images → handwritten model.
-
-**Why the font matters:** the original CAPTCHA generator used `BNazanin`, which renders the Persian digit `۰` as a tiny dot instead of a full ring — crippling accuracy. Switching to `BYekan` (which renders all digits fully) plus training on real crops took CAPTCHA accuracy from **30% → 100%**.
-
----
-
-## 📓 Notebooks
-
-| Notebook | Purpose |
-|----------|---------|
-| `01_explore_dataset.ipynb` | Dataset overview (10 classes, 28×28, 80k images) |
-| `02_training.ipynb` | Train the base CNN |
-| `03_segmentation_test.ipynb` | Test segmentation on real CAPTCHAs |
-| `04_prediction_pipeline.ipynb` | Assemble the end-to-end pipeline |
-| `05_fine_tuning.ipynb` | Fine-tune on real Persian digit images |
-
----
-
-## 🛠 Development
-
-### Run tests locally
-
-```bash
-pip install pytest
-python -m pytest tests/ -v
-```
-
-### CI
-
-Every push to `main` runs the test suite on GitHub Actions (Ubuntu, Python 3.11). A green badge means the pipeline is healthy.
-
----
-
-## 🤗 Hugging Face
-
-| Artifact | Link |
-|----------|------|
-| **Dataset** (80k handwritten digits) | [Mehdinmz/persian-handwritten-digits](https://huggingface.co/datasets/Mehdinmz/persian-handwritten-digits) |
-| **Model** (CNN, 99.8%) | [Mehdinmz/persian-handwritten-digit-recognition](https://huggingface.co/Mehdinmz/persian-handwritten-digit-recognition) |
-
-```python
-from huggingface_hub import hf_hub_download
-import tensorflow as tf
-
-path = hf_hub_download("Mehdinmz/persian-handwritten-digit-recognition",
-                       "digit_classifier_handwritten.keras")
-model = tf.keras.models.load_model(path)
-```
-
----
-
-## 📄 License
-
-[MIT](LICENSE) © 2026 Mohammad Mehdi Namazian
+## License
+[MIT](LICENSE) © Mehdi Namazian

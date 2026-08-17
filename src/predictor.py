@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 
 import cv2
 import numpy as np
@@ -6,6 +7,10 @@ import tensorflow as tf
 
 # Project root: src/ is one level below the repo root
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Allow running as a script: python src/predictor.py ...
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 
 MODEL_PATH = BASE_DIR / "models" / "digit_classifier_handwritten.keras"
 
@@ -148,9 +153,14 @@ def main():
     import sys
 
     parser = argparse.ArgumentParser(description="Recognize Persian digit CAPTCHAs")
-    parser.add_argument("image", help="Path to CAPTCHA image")
+    parser.add_argument("image", nargs="?", help="Path to CAPTCHA image")
+    parser.add_argument("--image", dest="image_path", help="Path to CAPTCHA image")
     parser.add_argument("--conf", action="store_true", help="Show per-digit confidence")
     args = parser.parse_args()
+
+    image_path = args.image_path or args.image
+    if not image_path:
+        parser.error("the following arguments are required: image or --image")
 
     try:
         import cv2
@@ -160,7 +170,7 @@ def main():
         from src.segmentation import find_digits, crop_digits
 
         # Segment the image
-        thresh = preprocess_before_seg(args.image)
+        thresh = preprocess_before_seg(image_path)
         boxes = sorted(find_digits(thresh), key=lambda b: b[0])
         crops = crop_digits(thresh, boxes)
 
@@ -195,7 +205,7 @@ def main():
             return
 
         # Full CAPTCHA (multiple digits) → pipeline (multi-font model)
-        text = predict_captcha(args.image)
+        text = predict_captcha(image_path)
         print(text)
         if args.conf:
             for d, crop in zip(text, crops):

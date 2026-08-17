@@ -4,6 +4,10 @@ import tensorflow as tf
 def preprocess_before_seg(image_path):
 
     img = cv2.imread(image_path)
+    if img is None:
+        raise FileNotFoundError(
+            f"Could not read image: {image_path}. Check that the file exists."
+        )
     # جدا کردن کانال‌ها
     b, g, r = cv2.split(img)
 
