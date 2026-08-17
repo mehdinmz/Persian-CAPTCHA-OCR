@@ -77,6 +77,21 @@ pip install -r requirements.txt
 
 > TensorFlow، OpenCV، pandas، matplotlib، seaborn، scikit-learn، jupyter و pytest را نصب میکند.
 
+### نصب به عنوان پکیج (اختیاری)
+
+پروژه را از هرجایی قابل import کنید و کامند `captcha-ocr` را دریافت کنید:
+
+```bash
+pip install -e .
+```
+
+سپس از هر پوشهای استفاده کنید:
+
+```bash
+captcha-ocr path/to/captcha.png
+captcha-ocr path/to/captcha.png --conf
+```
+
 ### استفاده از خط فرمان
 
 ```bash
