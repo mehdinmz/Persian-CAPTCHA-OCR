@@ -126,6 +126,32 @@ def test_predict_digit_accepts_path():
     print("\npredict_digit accepts str path + numpy array: OK")
 
 
+def test_find_digits_filters_noise_and_texture():
+    """find_digits must keep clean digits while rejecting noise and
+    textured (busy) regions."""
+    import numpy as np
+    from src.segmentation import find_digits
+
+    # A clean synthetic digit-like blob: 40x50 solid rectangle
+    clean = np.zeros((100, 100), dtype=np.uint8)
+    cv2.rectangle(clean, (10, 25), (50, 75), 255, -1)  # 40x50 solid
+
+    # A textured region: 40x50 with many small specks
+    textured = np.zeros((100, 100), dtype=np.uint8)
+    rng = np.random.default_rng(42)
+    speck = rng.integers(0, 2, size=(40, 50), dtype=np.uint8) * 255
+    textured[10:50, 10:60] = speck
+
+    boxes_clean = find_digits(clean)
+    boxes_textured = find_digits(textured)
+
+    # Clean solid shape should be kept (it is a plausible digit)
+    assert len(boxes_clean) >= 1, "clean digit-like region was dropped"
+
+    # Textured busy region should be rejected
+    assert len(boxes_textured) == 0, "textured region should be rejected"
+
+
 if __name__ == "__main__":
     test_single_digit_each_class()
     print("test_single_digit_each_class: OK")

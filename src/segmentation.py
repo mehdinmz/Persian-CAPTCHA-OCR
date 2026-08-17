@@ -6,6 +6,20 @@ import cv2
 
 
 def find_digits(thresh):
+    """Find digit contours in a binary image.
+
+    Filters:
+      - minimum size (h >= 10, w >= 4): removes noise specks while
+        keeping thin CAPTCHA digits (a ۱ can be only 4-5 px wide)
+      - aspect ratio h/w in [0.5, 6.0]: digits are roughly square; the
+        tall Persian ۱ (and ۷) are narrow, while wide bars / tall page
+        strips (UI elements) are still rejected
+      - relative area: regions smaller than 30% of the median area are
+        dropped (outliers far below the typical digit size)
+      - internal complexity: a real digit has at most a couple of nested
+        contours (holes for 0/4/6/8/9). Textured regions (UI icons, small
+        text, busy backgrounds) produce dozens of contours and are dropped
+    """
 
     contours, _ = cv2.findContours(
         thresh,
@@ -19,13 +33,42 @@ def find_digits(thresh):
 
         x, y, w, h = cv2.boundingRect(contour)
 
-        if h > 1 and w > 1:
-            boxes.append((x,y,w,h))
+        if h < 10 or w < 4:
+            continue  # too small (noise)
+
+        aspect = h / float(w)
+        if not (0.5 <= aspect <= 6.0):
+            continue  # not digit-shaped (UI element / edge)
+
+        # Internal complexity filter: a clean digit has <= 3 nested
+        # contours (outer + 1-2 holes). Textures have dozens.
+        region = thresh[y:y + h, x:x + w]
+        inner, hier = cv2.findContours(
+            region,
+            cv2.RETR_CCOMP,
+            cv2.CHAIN_APPROX_SIMPLE
+        )
+        n_contours = len(inner)
+        if n_contours > 5:
+            continue  # textured / busy region, not a digit
+
+        boxes.append((x, y, w, h))
+
+    if not boxes:
+        return boxes
+
+    # Relative-area filter: drop boxes much smaller than the typical digit
+    import statistics
+    median_area = statistics.median([w * h for (_, _, w, h) in boxes])
+    boxes = [
+        (x, y, w, h) for (x, y, w, h) in boxes
+        if w * h >= 0.3 * median_area
+    ]
 
     return sorted(
-    boxes,
-    key=lambda box: box[0]
-)
+        boxes,
+        key=lambda box: box[0]
+    )
 
 def crop_digits(thresh, boxes):
     digits = []
