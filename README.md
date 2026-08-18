@@ -101,6 +101,9 @@ python src/predictor.py --image path/to/captcha.png
 
 # Show per-digit confidence
 python src/predictor.py path/to/captcha.png --conf
+
+# Use adaptive binarization for real-world screenshots
+python src/predictor.py path/to/screenshot.png --auto
 ```
 
 **Example output:**
