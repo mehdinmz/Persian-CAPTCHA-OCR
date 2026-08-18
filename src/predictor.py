@@ -147,6 +147,56 @@ def predict_from_path(image_path):
 # CLI
 # =====================================
 
+def _looks_like_captcha(thresh, boxes):
+    """Heuristic: synthetic CAPTCHAs are small images with compact boxes.
+
+    Real-world screenshots are large (>300px wide) and have bigger,
+    more spaced-out boxes. Synthetic captchas are typically ~200px wide
+    with small (10-35px) digit boxes.
+    """
+    h, w = thresh.shape[:2]
+    if w > 300:
+        return False
+    if not boxes:
+        return False
+    avg_h = sum(b[3] for b in boxes) / len(boxes)
+    return avg_h <= 40
+
+
+def _geometric_digit(crop, hw_digit, pf_digit):
+    """Tie-break between the handwritten and multi-font models using
+    simple geometry when the two models disagree.
+
+    - A tall, narrow blob (aspect ratio > 2.2) with no holes is a ۱.
+    - A wide blob (aspect < 1.2) with an enclosed hole is a ۰.
+    Otherwise fall back to the handwritten model (better on handwriting).
+    """
+    import cv2
+    gray = crop if len(crop.shape) == 2 else cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+    # Ensure binary (0/255) orientation: white digits on black
+    if gray.mean() > 127:
+        gray = cv2.bitwise_not(gray)
+    # Morphology to connect broken strokes
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
+
+    h, w = gray.shape[:2]
+    aspect = h / max(w, 1)
+
+    contours, hier = cv2.findContours(gray, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    holes = 0
+    if hier is not None:
+        holes = sum(1 for hh in hier[0] if hh[3] != -1)
+
+    if aspect > 2.2 and holes == 0:
+        # Tall and narrow with no enclosed area → definitely ۱
+        return "۱"
+    if aspect < 1.2 and holes >= 1:
+        # Wide with an enclosed hole → definitely ۰
+        return "۰"
+    return hw_digit
+
+
 def main():
     """CLI: captcha-ocr <image_path> — print the predicted CAPTCHA text."""
     import argparse
@@ -167,7 +217,8 @@ def main():
     try:
         import cv2
         import numpy as np
-        from src.pipeline import predict_captcha, predict_digit
+        from src.pipeline import predict_captcha
+        from src.predictor import predict_digit
         from src.preprocessing import preprocess_before_seg
         from src.segmentation import find_digits, crop_digits
 
@@ -180,23 +231,40 @@ def main():
             raise ValueError("No digits were detected.")
 
         # Decide: single digit vs full CAPTCHA.
-        # If multiple separated digit boxes were detected, process each box;
-        # if only one box was found, process it as a single digit.
-        is_single = len(crops) == 1
+        # A CAPTCHA (multi-font synthetic) is handled by src.pipeline
+        # (multi-font model, trained on synthetic crops). Real-world
+        # screenshots are handled by the handwritten model, which
+        # generalizes better. We choose based on whether the image
+        # looks like a synthetic captcha: synthetic captchas are small
+        # (<= 220px wide) and have compact boxes.
+        is_captcha = len(crops) > 1 and _looks_like_captcha(thresh, boxes)
 
-        if is_single:
-            # Single digit image → handwritten model
-            digit, conf = predict_digit(crops[0])
-            print(digit)
+        if is_captcha:
+            # Full CAPTCHA (multiple digits) → pipeline (multi-font model)
+            text = predict_captcha(image_path)
+            print(text)
             if args.conf:
-                print(f"  {digit}: {conf:.1%}")
+                from src.pipeline import predict_digit as captcha_digit
+                for d, crop in zip(text, crops):
+                    if crop is None or crop.size == 0:
+                        continue
+                    digit, conf = captcha_digit(crop)
+                    print(f"  {digit}: {conf:.1%}")
             return
 
-        # Multiple digits → predict each cropped box
+        # Single digit (or real-world screenshot) → handwritten model
+        # with a geometric tie-breaker when the two models disagree.
+        from src.pipeline import predict_digit as captcha_digit
+
         digits_out = []
         for crop in crops:
-            digit, conf = predict_digit(crop)
-            digits_out.append((digit, conf))
+            hw_digit, hw_conf = predict_digit(crop)
+            pf_digit, pf_conf = captcha_digit(crop)
+            if hw_digit == pf_digit:
+                digit = hw_digit
+            else:
+                digit = _geometric_digit(crop, hw_digit, pf_digit)
+            digits_out.append((digit, max(hw_conf, pf_conf)))
 
         text = "".join(d for d, _ in digits_out)
         print(text)
